@@ -1,3 +1,7 @@
+const CSV_SHEET_URL =
+	"https://docs.google.com/spreadsheets/d/e/2PACX-1vSSOy2bT4N1kKaI4dAqeUOII5Jg9c96JwBI5ZKsln9BlPWayyHjUcZB3pzTjLkKnAyod0kuBGjlL-hA/pub?output=csv";
+const INSTAGRAM_DM_LINK = "https://ig.me/m/mishtusart";
+
 // ──────── IMAGE LINK UTILITY (Google Drive, Dropbox, Data URLs) ────────
 function toDirectImageUrl(url) {
 	if (!url) return { direct: "", thumbnail: "" };
@@ -13,14 +17,6 @@ function toDirectImageUrl(url) {
 		// Remove any trailing ? or & if left
 		direct = direct.replace(/[?&]$/, "");
 		return { direct, thumbnail: direct };
-	}
-	// Google Drive: extract file ID and build direct/thumbnail links
-	const m = url.match(/drive\.google\.com\/(?:file\/d\/|open\?id=)([\w-]+)/);
-	if (m && m[1]) {
-		return {
-			direct: `https://drive.google.com/uc?export=view&id=${m[1]}`,
-			thumbnail: `https://drive.google.com/thumbnail?id=${m[1]}`,
-		};
 	}
 	// Default: return as is
 	return { direct: url, thumbnail: url };
@@ -186,8 +182,7 @@ async function loadSheet() {
 // ──────── DEMO DATA ────────
 async function loadDemo() {
 	// Use the provided Google Sheets CSV URL for designs
-	const csvUrl =
-		"https://docs.google.com/spreadsheets/d/e/2PACX-1vSSOy2bT4N1kKaI4dAqeUOII5Jg9c96JwBI5ZKsln9BlPWayyHjUcZB3pzTjLkKnAyod0kuBGjlL-hA/pub?output=csv";
+	const csvUrl = CSV_SHEET_URL;
 	try {
 		const resp = await fetch(csvUrl);
 		if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
@@ -475,9 +470,7 @@ function closeModal(e) {
 }
 
 function bookNow(name) {
-	alert(
-		`Booking request for: ${name}\n\nYou can link this button to your WhatsApp, booking form, or contact page.`,
-	);
+	window.open("https://ig.me/m/mishtusart", "_blank");
 }
 
 document.addEventListener("keydown", (e) => {
