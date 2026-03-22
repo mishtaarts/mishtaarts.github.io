@@ -1,3 +1,30 @@
+// ──────── IMAGE LINK UTILITY (Google Drive, Dropbox, Data URLs) ────────
+function toDirectImageUrl(url) {
+	if (!url) return { direct: "", thumbnail: "" };
+	// Data URL: return as is
+	if (url.startsWith("data:image/")) {
+		return { direct: url, thumbnail: url };
+	}
+	// Dropbox: convert www.dropbox.com to dl.dropboxusercontent.com and remove dl=0/dl=1
+	if (url.includes("dropbox.com")) {
+		let direct = url.replace("www.dropbox.com", "dl.dropboxusercontent.com");
+		direct = direct.replace(/([?&])dl=0/, "$1");
+		direct = direct.replace(/([?&])dl=1/, "$1");
+		// Remove any trailing ? or & if left
+		direct = direct.replace(/[?&]$/, "");
+		return { direct, thumbnail: direct };
+	}
+	// Google Drive: extract file ID and build direct/thumbnail links
+	const m = url.match(/drive\.google\.com\/(?:file\/d\/|open\?id=)([\w-]+)/);
+	if (m && m[1]) {
+		return {
+			direct: `https://drive.google.com/uc?export=view&id=${m[1]}`,
+			thumbnail: `https://drive.google.com/thumbnail?id=${m[1]}`,
+		};
+	}
+	// Default: return as is
+	return { direct: url, thumbnail: url };
+}
 let allDesigns = [];
 let activeCategory = "All";
 loadDemo();
@@ -365,8 +392,9 @@ function parseTime(t) {
 }
 
 function cardHTML(d) {
+	const imgUrls = toDirectImageUrl(d.image);
 	const imgPart = d.image
-		? `<img src="${d.image}" alt="${d.name}" loading="lazy" onerror="this.parentElement.innerHTML='<div class=\\'card-img-placeholder\\'>✿</div>'">`
+		? `<img src="${imgUrls.direct}" alt="${d.name}" loading="lazy" onerror="if(this.src!=='${imgUrls.thumbnail}'){this.src='${imgUrls.thumbnail}'}else{this.parentElement.innerHTML='<div class=\\'card-img-placeholder\\'>✿</div>'}">`
 		: `<div class="card-img-placeholder">✿</div>`;
 	const stars = d.rating ? `<span class="meta-icon">★</span> ${d.rating}` : "";
 	return `
@@ -404,8 +432,9 @@ function openModal(id) {
 	if (!d) return;
 
 	const imgWrap = document.getElementById("modal-img-wrap");
+	const imgUrls = toDirectImageUrl(d.image);
 	imgWrap.innerHTML = d.image
-		? `<img src="${d.image}" alt="${d.name}">`
+		? `<img src="${imgUrls.direct}" alt="${d.name}" onerror="if(this.src!=='${imgUrls.thumbnail}'){this.src='${imgUrls.thumbnail}'}else{this.parentElement.innerHTML='<div class=\\'card-img-placeholder\\'>✿</div>'}">`
 		: `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:5rem;color:#e8c8a0;background:linear-gradient(135deg,#f8ede0,#f0d5b0)">✿</div>`;
 
 	const stars = d.rating
