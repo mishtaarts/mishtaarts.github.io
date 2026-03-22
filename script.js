@@ -18,7 +18,7 @@ function findCol(headers, ...aliases) {
 		const idx = headers.findIndex(
 			(h) =>
 				normalizeKey(h) === normalizeKey(alias) ||
-				normalizeKey(h).includes(normalizeKey(alias))
+				normalizeKey(h).includes(normalizeKey(alias)),
 		);
 		if (idx !== -1) return idx;
 	}
@@ -28,9 +28,18 @@ function findCol(headers, ...aliases) {
 // ──────── PARSE CSV ────────
 function parseCSV(text) {
 	const lines = text.trim().split("\n");
+	console.log("CSV lines count:", lines.length);
+
+	if (lines.length < 2) {
+		console.warn("CSV has less than 2 lines (header + data)");
+		return [];
+	}
+
 	const headers = lines[0]
 		.split(",")
 		.map((h) => h.replace(/^"|"$/g, "").trim());
+	console.log("Headers:", headers);
+
 	const rows = lines.slice(1).map((line) => {
 		const cells = [];
 		let current = "";
@@ -62,23 +71,41 @@ function parseCSV(text) {
 		"pic",
 		"imageurl",
 		"imgurl",
-		"photourl"
+		"photourl",
 	);
 	const iDesc = findCol(headers, "description", "desc", "about", "detail");
 	const iRat = findCol(headers, "rating", "stars", "review");
 
-	return rows
-		.filter((r) => r.some((c) => c))
-		.map((r, idx) => ({
-			id: idx,
-			name: r[iName] || "Untitled Design",
-			price: r[iPrice] || "",
-			time: r[iTime] || "",
-			category: r[iCat] || "General",
-			image: r[iImg] || "",
-			description: r[iDesc] || "",
-			rating: r[iRat] || "",
-		}));
+	console.log(
+		"Column indices - Name:",
+		iName,
+		"Price:",
+		iPrice,
+		"Time:",
+		iTime,
+		"Cat:",
+		iCat,
+		"Img:",
+		iImg,
+		"Desc:",
+		iDesc,
+		"Rating:",
+		iRat,
+	);
+
+	const filtered = rows.filter((r) => r.some((c) => c));
+	console.log("Rows after filtering empty:", filtered.length);
+
+	return filtered.map((r, idx) => ({
+		id: idx,
+		name: r[iName] || "Untitled Design",
+		price: r[iPrice] || "",
+		time: r[iTime] || "",
+		category: r[iCat] || "General",
+		image: r[iImg] || "",
+		description: r[iDesc] || "",
+		rating: r[iRat] || "",
+	}));
 }
 
 // ──────── LOAD SHEET ────────
@@ -92,7 +119,7 @@ async function loadSheet() {
 	const id = extractSheetId(url);
 	if (!id) {
 		showError(
-			"Could not find a valid Sheet ID in the URL. Make sure you paste the full Google Sheets link."
+			"Could not find a valid Sheet ID in the URL. Make sure you paste the full Google Sheets link.",
 		);
 		return;
 	}
@@ -106,18 +133,18 @@ async function loadSheet() {
 		const resp = await fetch(csvUrl);
 		if (!resp.ok)
 			throw new Error(
-				`HTTP ${resp.status}: The sheet may not be publicly accessible.`
+				`HTTP ${resp.status}: The sheet may not be publicly accessible.`,
 			);
 		const text = await resp.text();
 		if (text.includes("<html"))
 			throw new Error(
-				'The sheet is not public. Please set sharing to "Anyone with link can view".'
+				'The sheet is not public. Please set sharing to "Anyone with link can view".',
 			);
 
 		allDesigns = parseCSV(text);
 		if (allDesigns.length === 0)
 			throw new Error(
-				"No data rows found. Check that your sheet has data below the header row."
+				"No data rows found. Check that your sheet has data below the header row.",
 			);
 
 		hideStatus();
@@ -130,103 +157,128 @@ async function loadSheet() {
 }
 
 // ──────── DEMO DATA ────────
-function loadDemo() {
-	// document.getElementById("sheetUrl").value = "(demo)";
-	allDesigns = [
-		{
-			id: 0,
-			name: "Full Bridal Set",
-			price: "₹3500",
-			time: "4–5 hrs",
-			category: "Bridal",
-			image:
-				"https://images.unsplash.com/photo-1620925133711-1499d68a3ff8?w=600&q=80",
-			description:
-				"Elaborate full-hand and foot mehndi for the perfect bridal look.",
-			rating: "4.9",
-		},
-		{
-			id: 1,
-			name: "Arabic Florals",
-			price: "₹800",
-			time: "1 hr",
-			category: "Arabic",
-			image:
-				"https://images.unsplash.com/photo-1586074299757-5a03b2e1f8ce?w=600&q=80",
-			description: "Flowing Arabic floral patterns from fingertips to wrist.",
-			rating: "4.7",
-		},
-		{
-			id: 2,
-			name: "Indo-Western Blend",
-			price: "₹1200",
-			time: "1.5 hrs",
-			category: "Indo-Western",
-			image:
-				"https://images.unsplash.com/photo-1604881991720-f91add269bed?w=600&q=80",
-			description:
-				"Modern geometric lines mixed with traditional Indian motifs.",
-			rating: "4.8",
-		},
-		{
-			id: 3,
-			name: "Simple Finger Art",
-			price: "₹350",
-			time: "30 min",
-			category: "Simple",
-			image:
-				"https://images.unsplash.com/photo-1600267165477-6d4cc741b379?w=600&q=80",
-			description: "Quick and elegant finger-only mehndi for festivals.",
-			rating: "4.5",
-		},
-		{
-			id: 4,
-			name: "Pakistani Heritage",
-			price: "₹2000",
-			time: "2.5 hrs",
-			category: "Pakistani",
-			image:
-				"https://images.unsplash.com/photo-1616004655123-818cbd4b3143?w=600&q=80",
-			description: "Fine line Pakistani style with intricate border work.",
-			rating: "5.0",
-		},
-		{
-			id: 5,
-			name: "Mandala Sleeve",
-			price: "₹1800",
-			time: "2 hrs",
-			category: "Mandala",
-			image:
-				"https://images.unsplash.com/photo-1631549916768-4119b2e5f926?w=600&q=80",
-			description: "Geometric mandala pattern flowing up the forearm.",
-			rating: "4.6",
-		},
-		{
-			id: 6,
-			name: "Rajasthani Classic",
-			price: "₹2500",
-			time: "3 hrs",
-			category: "Bridal",
-			image:
-				"https://images.unsplash.com/photo-1583263101898-e3c6c1f76f05?w=600&q=80",
-			description:
-				"Traditional Rajasthani style with peacock and groom motifs.",
-			rating: "4.8",
-		},
-		{
-			id: 7,
-			name: "Minimalist Lines",
-			price: "₹400",
-			time: "40 min",
-			category: "Simple",
-			image:
-				"https://images.unsplash.com/photo-1581812426773-00fefa3b5e34?w=600&q=80",
-			description: "Clean, modern lines for the contemporary minimalist.",
-			rating: "4.4",
-		},
-	];
-	// document.getElementById("instructions").style.display = "none";
-	renderCatalog();
+async function loadDemo() {
+	// Use the provided Google Sheets CSV URL for designs
+	const csvUrl =
+		"https://docs.google.com/spreadsheets/d/e/2PACX-1vSSOy2bT4N1kKaI4dAqeUOII5Jg9c96JwBI5ZKsln9BlPWayyHjUcZB3pzTjLkKnAyod0kuBGjlL-hA/pub?output=csv";
+	try {
+		const resp = await fetch(csvUrl);
+		if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+		const text = await resp.text();
+		console.log("CSV Response length:", text.length);
+		console.log("First 200 chars:", text.substring(0, 200));
+
+		if (!text || text.trim().length === 0) throw new Error("Empty response");
+		if (text.includes("<html") || text.includes("<HTML"))
+			throw new Error("HTML response received - sheet may not be public");
+
+		const parsed = parseCSV(text);
+		console.log("Parsed rows:", parsed.length, "First item:", parsed[0]);
+
+		if (!parsed || parsed.length === 0)
+			throw new Error("CSV parsing returned no results");
+
+		allDesigns = parsed;
+		// document.getElementById("instructions").style.display = "none";
+		renderCatalog();
+	} catch (err) {
+		console.error("Sheet load error:", err.message);
+		// Fallback to complete demo data
+		allDesigns = [
+			{
+				id: 0,
+				name: "Full Bridal Set",
+				price: "₹3500",
+				time: "4–5 hrs",
+				category: "Bridal",
+				image:
+					"https://images.unsplash.com/photo-1620925133711-1499d68a3ff8?w=600&q=80",
+				description:
+					"Elaborate full-hand and foot mehndi for the perfect bridal look.",
+				rating: "4.9",
+			},
+			{
+				id: 1,
+				name: "Arabic Florals",
+				price: "₹800",
+				time: "1 hr",
+				category: "Arabic",
+				image:
+					"https://images.unsplash.com/photo-1586074299757-5a03b2e1f8ce?w=600&q=80",
+				description: "Flowing Arabic floral patterns from fingertips to wrist.",
+				rating: "4.7",
+			},
+			{
+				id: 2,
+				name: "Indo-Western Blend",
+				price: "₹1200",
+				time: "1.5 hrs",
+				category: "Indo-Western",
+				image:
+					"https://images.unsplash.com/photo-1604881991720-f91add269bed?w=600&q=80",
+				description:
+					"Modern geometric lines mixed with traditional Indian motifs.",
+				rating: "4.8",
+			},
+			{
+				id: 3,
+				name: "Simple Finger Art",
+				price: "₹350",
+				time: "30 min",
+				category: "Simple",
+				image:
+					"https://images.unsplash.com/photo-1600267165477-6d4cc741b379?w=600&q=80",
+				description: "Quick and elegant finger-only mehndi for festivals.",
+				rating: "4.5",
+			},
+			{
+				id: 4,
+				name: "Pakistani Heritage",
+				price: "₹2000",
+				time: "2.5 hrs",
+				category: "Pakistani",
+				image:
+					"https://images.unsplash.com/photo-1616004655123-818cbd4b3143?w=600&q=80",
+				description: "Fine line Pakistani style with intricate border work.",
+				rating: "5.0",
+			},
+			{
+				id: 5,
+				name: "Mandala Sleeve",
+				price: "₹1800",
+				time: "2 hrs",
+				category: "Mandala",
+				image:
+					"https://images.unsplash.com/photo-1631549916768-4119b2e5f926?w=600&q=80",
+				description: "Geometric mandala pattern flowing up the forearm.",
+				rating: "4.6",
+			},
+			{
+				id: 6,
+				name: "Rajasthani Classic",
+				price: "₹2500",
+				time: "3 hrs",
+				category: "Bridal",
+				image:
+					"https://images.unsplash.com/photo-1583263101898-e3c6c1f76f05?w=600&q=80",
+				description:
+					"Traditional Rajasthani style with peacock and groom motifs.",
+				rating: "4.8",
+			},
+			{
+				id: 7,
+				name: "Minimalist Lines",
+				price: "₹400",
+				time: "40 min",
+				category: "Simple",
+				image:
+					"https://images.unsplash.com/photo-1581812426773-00fefa3b5e34?w=600&q=80",
+				description: "Clean, modern lines for the contemporary minimalist.",
+				rating: "4.4",
+			},
+		];
+		renderCatalog();
+	}
 }
 
 // ──────── RENDER ────────
@@ -247,7 +299,7 @@ function renderCatalog() {
 			(c) =>
 				`<button class="chip${
 					c === "All" ? " active" : ""
-				}" onclick="setCategory('${c}')">${c}</button>`
+				}" onclick="setCategory('${c}')">${c}</button>`,
 		)
 		.join("");
 
@@ -395,7 +447,7 @@ function closeModal(e) {
 
 function bookNow(name) {
 	alert(
-		`Booking request for: ${name}\n\nYou can link this button to your WhatsApp, booking form, or contact page.`
+		`Booking request for: ${name}\n\nYou can link this button to your WhatsApp, booking form, or contact page.`,
 	);
 }
 
